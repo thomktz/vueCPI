@@ -46,7 +46,7 @@ export default {
         if (item.isExpanded) {
           // Item is already expanded, collapse it
           item.isExpanded = false;
-          this.items = this.items.filter(i => i.parent !== item.label);
+          this.removeChildren(item.label);
         } else {
           // Item is collapsed, expand it
           item.isExpanded = true;
@@ -63,10 +63,21 @@ export default {
         console.error(error);
       }
     },
+    removeChildren(parentLabel) {
+      // Filter out the direct children
+      let directChildren = this.items.filter(item => item.parent === parentLabel);
+      this.items = this.items.filter(item => item.parent !== parentLabel);
+
+      // Recursively remove any nested children
+      directChildren.forEach(child => {
+        this.removeChildren(child.label);
+      });
+    },
     onPlay(code, label) {
       this.$emit('item-clicked', code, label);
     },
   },
+
 };
 </script>
 
