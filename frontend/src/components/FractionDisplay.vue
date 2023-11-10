@@ -1,4 +1,6 @@
 <template>
+  <div class="container">
+    <div class="header-text">Node weight<br>in the whole HICP</div>
     <div class="fraction-display">
       <svg viewBox="0 0 200 200" class="fraction-circle">
         <circle
@@ -17,7 +19,7 @@
           y="100"
           dy=".3em"
         >
-          {{ fraction.toFixed(digits) }}
+          {{ formattedFraction }}
         </text>
   
         <text
@@ -31,15 +33,18 @@
         </text>
       </svg>
     </div>
-  </template>
+  </div>
+</template>
   
   <script>
   export default {
     name: 'FractionDisplay',
     props: {
       fraction: Number,
-      digits: Number,
-
+      digits: {
+        type: Number,
+        default: 4 
+      },
     },
     computed: {
       radius() {
@@ -48,16 +53,27 @@
       strokeWidth() {
         return 8;
       },
+      formattedFraction() {
+        // Format the fraction to have up to `this.digits` decimal places without trailing zeroes
+        return this.formatFraction(this.fraction, this.digits);
+      }
     },
+    methods: {
+      formatFraction(number, digits) {
+        // Convert to fixed, then to float to remove trailing zeroes, then to fixed again with max digits
+        return parseFloat(number.toFixed(digits)).toFixed(Math.min(digits, (number.toString().split('.')[1] || '').length));
+      }
+    }
   };
   </script>
   
   <style scoped>
   .fraction-display {
-    position: relative;
-    width: 200px; /* adjust as needed */
-    height: 200px; /* adjust as needed */
-  }
+  position: relative;
+  width: 200px; /* adjust as needed */
+  height: 200px; /* adjust as needed */
+  margin-top: 30px; /* Make space for the absolutely positioned header text */
+}
   
   .fraction-circle {
     position: absolute;
@@ -65,8 +81,7 @@
     left: 0;
     width: 100%;
     height: 100%;
-  }
-  
+  }  
   .fraction-text {
     font-size: 20px;
     fill: white;
@@ -74,10 +89,21 @@
     font-weight: 350;
     letter-spacing: 1px;
   }
-  
   .fraction-text.denominator {
     font-size: 15px;
     font-weight: 300;
   }
+  .container {
+  position: relative;
+  text-align: center;
+}
+
+.header-text {
+  position: absolute;
+  top: -30px; /* Adjust this value as needed to move the text up */
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 18px;
+}
   </style>
   
