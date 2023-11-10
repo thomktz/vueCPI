@@ -1,5 +1,8 @@
+import os
 import logging
+import pytz
 
+from datetime import datetime
 from flask import Flask, jsonify
 from flask_cors import CORS
 
@@ -7,6 +10,14 @@ from cpilib import HICP
 from cpilib.constants import EA19
 from cpilib.utils import coicop_labels
 
+def last_update_date(path):
+    """Get the last update time of a file."""
+    timestamp = os.path.getmtime(path)
+    last_modified_date = datetime.fromtimestamp(timestamp, pytz.utc)
+    paris_timezone = pytz.timezone('Europe/Paris')
+    paris_date = last_modified_date.astimezone(paris_timezone)
+    print("Time:", paris_date.strftime("%Y-%m-%d %H:%M:%S"), flush=True)
+    return paris_date.strftime("%Y-%m-%d %H:%M:%S")
 
 app = Flask(__name__)
 CORS(app)
@@ -19,7 +30,6 @@ hicp = HICP.from_cache(time_limit=1)
 # Transform the dictionary into a list of dicts
 countries = (
     [{"value": "EA19", "label": "Euro Area"}] 
-    + [{"value": "all", "label": "Euro Area (breakdown)"}] 
     + [{"value": k, "label": v} for k, v in EA19.items()]
 )
 
@@ -64,7 +74,7 @@ def get_data(country, code):
     
     as_df = values.reset_index()
     as_df.columns = ["date", "value"]
-    as_df['date'] = as_df['date'].dt.strftime('%Y-%m-%d')
+    as_df["date"] = as_df["date"].dt.strftime("%Y-%m-%d")
     data = as_df.to_dict("records")
     return jsonify(data)
 
@@ -82,6 +92,22 @@ def get_weights(country, code):
         return jsonify({"error": "Error when fetching data"}), 404
 
     return jsonify({"country": country_w, "item": item_w})
+
+@app.route("/last-update")
+def last_update():
+    """Get the last update time of the data."""
+    try:
+        return jsonify({"last_update": last_update_date("cache/prices.parquet")})
+    except OSError:
+        return jsonify({"error": "Data file not found"}), 404
+
+@app.route("/refresh", methods=["GET"])
+def refresh_data():
+    global hicp
+    # Refresh the data
+    hicp = HICP.from_cache(time_limit=0)
+
+    return jsonify({"message": "Data refreshed", "last_refresh_time": last_update_date("cache/prices.parquet")}), 200
 
 
 if __name__ == "__main__":

@@ -23,6 +23,17 @@
     </div>
     <div class="w-1/4 ml-4">
       <div class="bg-slate-900 rounded-xl shadow-lg p-4 h-full">
+        <div class="mb-4">
+          <div class="last-update-text mb-2">Last refresh: {{ lastRefresh }}</div>
+          <button
+            @click="refreshData"
+            :class="{'refresh-button-disabled': isRefreshing, 'refresh-button': !isRefreshing}"
+            :disabled="isRefreshing"
+            class="mb-4"
+          >
+            Refresh Data
+          </button>
+        </div>
         <div class="text-2xl font-bold mb-4">Country</div>
         <div class="w-full mb-8">
           <div class="relative">
@@ -72,6 +83,8 @@ export default {
       selectedNodeLabel: "Harmonized overall",
       countryWeight: 1000,
       itemWeight: 1000,
+      lastRefresh: '',
+      isRefreshing: false,
     };
   },
   watch: {
@@ -109,6 +122,31 @@ export default {
       this.itemWeight = response.data.item
       this.countryWeight = response.data.country
     },
+    async refreshData() {
+      this.isRefreshing = true; // Disable the button
+      try {
+        await axios.get('/refresh');
+        this.fetchLastUpdate(); // Refresh the last refresh timestamp
+      } catch (error) {
+        console.error('Error refreshing data:', error);
+      } finally {
+        this.isRefreshing = false; // Re-enable the button after the operation
+      }
+    },
+
+    async fetchLastUpdate() {
+      // Call the /last-update endpoint
+      try {
+        const response = await axios.get('/last-update');
+        console.log("Refresh time: ", response.data.last_update);
+        this.lastRefresh = response.data.last_update;
+      } catch (error) {
+        console.error('Error fetching last update:', error);
+      }
+    },
+  },
+  async mounted() {
+    this.fetchLastUpdate();
   },
   computed: {
     selectedCountryLabel() {
@@ -130,17 +168,34 @@ body {
   -moz-osx-font-smoothing: grayscale;
   color: #bdc6d0;
 }
-
 .pies-container {
   display: flex;
   align-items: center;
   max-height: 30vh;
 }
-
 .pies-container > div {
   display: flex;
   justify-content: center;
   align-items: center;
   flex: 1;
+}
+.refresh-button {
+  background-color: rgb(12 74 110); /* Tailwind blue-600 */
+  color: white;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.refresh-button:hover {
+  background-color: rgb(7 89 133); /* Tailwind blue-700 */
+}
+.refresh-button-disabled {
+  background-color: #6b7280; /* Tailwind gray-500 for disabled state */
+  color: white;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: not-allowed;
 }
 </style>
