@@ -7,8 +7,8 @@
             <div :class="`label-pill depth-${item.depth}`">
               <div class="pill-content">
                 <button v-if="item.children && item.children.length" class="expand-button" @click="toggleChildren(item)">
-                  <span v-if="item.isExpanded">↑</span>
-                  <span v-else>↓</span>
+                  <span v-if="item.isExpanded">▲</span>
+                  <span v-else>▼</span>
                 </button>
                 <div class="label" :title="item.label">
                   {{ item.label }}

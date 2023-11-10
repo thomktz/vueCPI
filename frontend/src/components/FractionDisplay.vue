@@ -103,7 +103,7 @@
   top: -30px; /* Adjust this value as needed to move the text up */
   left: 50%;
   transform: translateX(-50%);
-  font-size: 18px;
+  font-size: 13px;
 }
   </style>
   
